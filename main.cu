@@ -6,42 +6,22 @@
 /* 			make																		*/
 
 #include "include/global.h"
-#include "include/clock_timer.h"
 #include "include/sequencial.h"
 #include "include/paralelo.h"
 
 int n1, n2;
 float un = 5, ue = 10, us = 5, uo = 0;
-float h1;
-float h2;
+float h1, h2;
 float *malha;
-const float w_fixo = 0.6;
-const float PI = 2.0*acos(0);
+const float w_fixo = 1.3;
+const float pi = 2.0*acos(0);
 
-COORD_MALHA valor(int i, int j) {
-	float xi, yj;
-
-	xi = (i+1)*h1;
-	yj = (j+1)*h2;
-
-	return COORD_MALHA(xi, yj);
-}
-
-float get_a(float x, float y) {
+__host__ __device__ float get_a(float x, float y) {
 	return 500.0 * x * (1.0 - x) * (0.5 - y);
 }
 
-float get_b(float x, float y) {
+__host__ __device__ float get_b(float x, float y) {
 	return 500.0 * y * (1.0 - y) * (x - 0.5);
-}
-
-float get_v(int i, int j) {
-	if (i < 0) return uo;
-	if (i == n1) return ue;
-	if (j < 0) return us;
-	if (j == n2) return un;
-
-	return malha[i*n2 + j];
 }
 
 void init_malha() {
@@ -81,15 +61,23 @@ int main(int argc, char **argv) {
 
 	init_malha();
 
-	if (argc == 3 || !strcmp(argv[3], "sw")){
+	if (argc == 3 || !strcmp(argv[3], "sw")) {
 		printf("Processamento sequencial\n"
 			"Sobre-relaxacao sucessiva\n");
-		gauss_seidel_seq_w(iter);
+		gauss_seidel_seq(iter);
 	}
-	else if (!strcmp(argv[3], "sl")){
+	else if (!strcmp(argv[3], "sl")) {
 		printf("Processamento sequencial\n"
 			"Sobre-relaxacao sucessiva local\n");
-		gauss_seidel_seq_l(iter);
+		gauss_seidel_seq(iter, LOCAL);
+	} else if (!strcmp(argv[3], "pw")) {
+		printf("Processamento paralelo\n"
+			"Sobre-relaxacao sucessiva\n");
+		gauss_seidel_par(iter);
+	} else if (!strcmp(argv[3], "pl")) {
+		printf("Processamento paralelo\n"
+			"Sobre-relaxacao sucessiva\n");
+		gauss_seidel_par(iter, LOCAL);
 	}
 
 	for(int j = n2; j >= -1; --j) {
@@ -98,6 +86,8 @@ int main(int argc, char **argv) {
 		}
 		fprintf(fout, "\n");
 	}
+
+	free(malha);
 
 	return 0;
 }

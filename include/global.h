@@ -6,29 +6,29 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include "clock_timer.h"
+
+#define PAR 0
+#define IMPAR 1
+
+#define FIXO 0
+#define LOCAL 1
 
 #define SHOW_ERR(msg) { fprintf(stderr, "ERROR: %s\n", msg); \
 exit(-1); }
 
 #define sq(x) ((x)*(x))
 
+extern float *malha;
+
 extern int n1, n2;
 extern float un, ue, us, uo;
 extern float h1;
 extern float h2;
-extern float *malha;
 extern const float w_fixo;
-extern const float PI;
+extern const float pi;
 
-typedef struct _COORD_MALHA {
-	float xi, yj;
-
-	_COORD_MALHA(float _xi, float _yj): xi(_xi), yj(_yj) {}
-} COORD_MALHA;
-
-COORD_MALHA valor(int i, int j);
-float get_a(float x, float y);
-float get_b(float x, float y);
-float get_v(int i, int j);
+__host__ __device__ float get_a(float x, float y);
+__host__ __device__ float get_b(float x, float y);
 
 #endif

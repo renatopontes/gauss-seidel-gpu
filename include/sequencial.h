@@ -3,15 +3,11 @@
 
 #include "global.h"
 
-#define PAR 0
-#define IMPAR 1
+// Método de Gauss-Seidel sequencial com sobre-relaxação sucessiva
+// com iter iterações. Utiliza w variável se modo == LOCAL.
+void gauss_seidel_seq(int iter, int modo=FIXO);
 
-// Método de Gauss-Seidel com sobre-relaxação sucessiva
-// com iter iterações
-void gauss_seidel_seq_w(int iter);
-
-// Método de Gauss-Seidel com sobre-relaxação sucessiva local
-// com iter iterações
-void gauss_seidel_seq_l(int iter);
+// Retorna o valor da malha na posição (i, j).
+float get_v(int i, int j);
 
 #endif
