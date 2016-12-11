@@ -1,4 +1,4 @@
-[x, text]=fscanfMat("C:\Users\Renato\Google Drive\ufrj\7_periodo\programacao paralela com gpu\codigo\trabalho_GPU\out.txt")
+[x, text]=fscanfMat("..\out\matriz.txt")
 
 [nl,nc]=size(x)
 

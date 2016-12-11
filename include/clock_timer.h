@@ -1,17 +1,3 @@
-/* Example:
- *    #include "clock_timer.h"
- *    . . .
- *    double start, finish, elapsed;
- *    . . .
- *    GET_TIME(start);
- *    . . .
- *    Code to be timed
- *    . . .
- *    GET_TIME(finish);
- *    elapsed = finish - start;
- *    printf("The code to be timed took %e seconds\n", elapsed);
-*/
-
 #ifndef _CLOCK_TIMER_H
 #define _CLOCK_TIMER_H
 

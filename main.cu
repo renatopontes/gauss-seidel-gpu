@@ -1,36 +1,22 @@
-/* Alunos: 																	*/
-/*			Renato Pontes Rodrigues                                         */
-/*			Mateus Ildefonso do Nascimento									*/
+/* Alunos: 																				*/
+/*			Renato Pontes Rodrigues														*/
+/*			Mateus Ildefonso do Nascimento												*/
 
-/* Para compilar:                                                           */
-/* nvcc matrix_mult.cu -o matrix_mult                                       */
-/* com verificação: -DCHECK                                                 */
-/* com impressão das matrizes: -DPRINT_M                                    */
-/* impressão pra facilitar fazer a planilha: -DNOT_VERBOSE                  */
-/* DEFINIR TAMANHO DOS BLOCOS (OBRIGATÓRIO): -DTAM_BLOCO=tam                */
-/* VERSÃO COM MEMORIA COMPARTILHADA: -DSHARED                               */
-/* PS: tem um arquivo roda_testes que só roda no Windows mas lá dá pra ver  */
-/* exemplos de compilação.                                                  */
+/* Para compilar:																		*/
+/* 			make																		*/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-#include <string.h>
-#include "clock_timer.h"
-
-#define sq(x) ((x)*(x))
+#include "include/global.h"
+#include "include/clock_timer.h"
+#include "include/sequencial.h"
+#include "include/paralelo.h"
 
 int n1, n2;
 float un = 5, ue = 10, us = 5, uo = 0;
 float h1;
 float h2;
-
-typedef struct _COORD_MALHA {
-	float xi, yj;
-
-	_COORD_MALHA(float _xi, float _yj): xi(_xi), yj(_yj) {}
-} COORD_MALHA;
+float *malha;
+const float w_fixo = 0.6;
+const float PI = 2.0*acos(0);
 
 COORD_MALHA valor(int i, int j) {
 	float xi, yj;
@@ -41,22 +27,15 @@ COORD_MALHA valor(int i, int j) {
 	return COORD_MALHA(xi, yj);
 }
 
-void init_malha(float *malha) {
-	srand(time(NULL));
-	for (int i = 0; i < n1*n2; ++i) {
-		malha[i] = (1.0 * rand() / RAND_MAX) * 10.0;
-	}
-}
-
-float a(float x, float y) {
+float get_a(float x, float y) {
 	return 500.0 * x * (1.0 - x) * (0.5 - y);
 }
 
-float b(float x, float y) {
+float get_b(float x, float y) {
 	return 500.0 * y * (1.0 - y) * (x - 0.5);
 }
 
-float get_v(int i, int j, float *malha) {
+float get_v(int i, int j) {
 	if (i < 0) return uo;
 	if (i == n1) return ue;
 	if (j < 0) return us;
@@ -65,40 +44,27 @@ float get_v(int i, int j, float *malha) {
 	return malha[i*n2 + j];
 }
 
-void calcula_v(int i, int j, float *malha) {
-	COORD_MALHA pos = valor(i, j);
-	float o, e, s, n;
-
-	o = (2.0 + h1 * a(pos.xi, pos.yj)) / (4.0 * (1.0 + sq(h1)/sq(h2)));
-	e = (2.0 - h1 * a(pos.xi, pos.yj)) / (4.0 * (1.0 + sq(h1)/sq(h2)));
-	s = (2.0 + h2 * b(pos.xi, pos.yj)) / (4.0 * (1.0 + sq(h2)/sq(h1)));
-	n = (2.0 - h2 * b(pos.xi, pos.yj)) / (4.0 * (1.0 + sq(h2)/sq(h1)));
-
-	malha[i*n2 + j] = o*get_v(i-1,j, malha) + e*get_v(i+1, j, malha) + s*get_v(i, j-1, malha) + n*get_v(i, j+1, malha);
-}
-
-void processa_malha(float *malha) {
-	for (int i = 0; i < n1; ++i) {
-		for (int j = i % 2; j < n2; j += 2) {
-			calcula_v(i, j, malha);
-		}
-	}
-
-	for (int i = 0; i < n1; ++i) {
-		for (int j = (i+1) % 2; j < n2; j += 2) {
-			calcula_v(i, j, malha);
-		}
-	}
-}
-
-void gauss_seidel(float *malha, int iter) {
-	while(iter--) {
-		processa_malha(malha);
+void init_malha() {
+	srand(time(NULL));
+	for (int i = 0; i < n1*n2; ++i) {
+		malha[i] = (1.0 * rand() / RAND_MAX) * 10.0;
 	}
 }
 
 int main(int argc, char **argv) {
-	float *malha;
+	FILE *fout;
+	const int iter = 1000;
+
+	if (argc < 3) {
+		SHOW_ERR("Passagem incorreta de parametros.\n\n"
+			"\tUso: ./gauss_seidel N1 N2 [sw|sl|pw|pl]\n"
+			"\tN1: largura da malha\n"
+			"\tN2: altura da malha\n"
+			"\tsw: processamento sequencial com sobre-relaxacao sucessiva. (default)\n"
+			"\tsl: processamento sequencial com sobre-relaxacao sucessiva local.\n"
+			"\tpw: processamento paralelo com sobre-relaxacao sucessiva.\n"
+			"\tpl: processamento paralelo com sobre-relaxacao sucessiva local.\n");
+	}
 
 	n1 = atoi(argv[1]);
 	n2 = atoi(argv[2]);
@@ -106,25 +72,32 @@ int main(int argc, char **argv) {
 	h1 = 1.0 / (n1 + 1);
 	h2 = 1.0 / (n2 + 1);
 
+	fout = fopen("out/matriz.txt", "w+");
+	if (!fout) {
+		SHOW_ERR("Nao foi possivel criar arquivo de saida\n");
+	}
+
 	malha = (float *) malloc(n1 * n2 * sizeof(float));
 
-	init_malha(malha);
-	gauss_seidel(malha, 5000);
+	init_malha();
+
+	if (argc == 3 || !strcmp(argv[3], "sw")){
+		printf("Processamento sequencial\n"
+			"Sobre-relaxacao sucessiva\n");
+		gauss_seidel_seq_w(iter);
+	}
+	else if (!strcmp(argv[3], "sl")){
+		printf("Processamento sequencial\n"
+			"Sobre-relaxacao sucessiva local\n");
+		gauss_seidel_seq_l(iter);
+	}
 
 	for(int j = n2; j >= -1; --j) {
 		for (int i = -1; i <= n1 ; ++i) {
-			printf("%f ", get_v(i, j, malha));
+			fprintf(fout, "%f ", get_v(i, j));
 		}
-		printf("\n");
+		fprintf(fout, "\n");
 	}
-
-	// printf("\n");
-	// for(int i = -1; i <= n1; ++i) {
-	// 	for (int j = -1; j <= n2 ; ++j) {
-	// 		printf("%f ", malha[i*n2 + j]);
-	// 	}
-	// 	printf("\n");
-	// }
 
 	return 0;
 }
