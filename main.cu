@@ -3,7 +3,8 @@
 /*			Mateus Ildefonso do Nascimento												*/
 
 /* Para compilar:																		*/
-/* 			make																		*/
+/* 			make [TAM_BLOCO=T]															*/
+/* 			T é um inteiro, o tamanho do bloco.	(default: 8)							*/
 
 #include "include/global.h"
 #include "include/sequencial.h"
@@ -33,13 +34,15 @@ void init_malha() {
 
 int main(int argc, char **argv) {
 	FILE *fout;
-	const int iter = 1000;
+	TEMPO t;
+	int iter;
 
-	if (argc < 3) {
+	if (argc < 4) {
 		SHOW_ERR("Passagem incorreta de parametros.\n\n"
-			"\tUso: ./gauss_seidel N1 N2 [sw|sl|pw|pl]\n"
+			"\tUso: ./gauss_seidel N1 N2 iter [sw|sl|pw|pl]\n"
 			"\tN1: largura da malha\n"
 			"\tN2: altura da malha\n"
+			"\titer: numero de iteracoes\n"
 			"\tsw: processamento sequencial com sobre-relaxacao sucessiva. (default)\n"
 			"\tsl: processamento sequencial com sobre-relaxacao sucessiva local.\n"
 			"\tpw: processamento paralelo com sobre-relaxacao sucessiva.\n"
@@ -48,6 +51,7 @@ int main(int argc, char **argv) {
 
 	n1 = atoi(argv[1]);
 	n2 = atoi(argv[2]);
+	iter = atoi(argv[3]);
 
 	h1 = 1.0 / (n1 + 1);
 	h2 = 1.0 / (n2 + 1);
@@ -61,23 +65,25 @@ int main(int argc, char **argv) {
 
 	init_malha();
 
-	if (argc == 3 || !strcmp(argv[3], "sw")) {
-		printf("Processamento sequencial\n"
-			"Sobre-relaxacao sucessiva\n");
-		gauss_seidel_seq(iter);
+	if (argc == 4 || !strcmp(argv[4], "sw")) {
+		// printf("Processamento sequencial\n"
+		// 	"Sobre-relaxacao sucessiva\n");
+		t = gauss_seidel_seq(iter);
 	}
-	else if (!strcmp(argv[3], "sl")) {
-		printf("Processamento sequencial\n"
-			"Sobre-relaxacao sucessiva local\n");
-		gauss_seidel_seq(iter, LOCAL);
-	} else if (!strcmp(argv[3], "pw")) {
-		printf("Processamento paralelo\n"
-			"Sobre-relaxacao sucessiva\n");
-		gauss_seidel_par(iter);
-	} else if (!strcmp(argv[3], "pl")) {
-		printf("Processamento paralelo\n"
-			"Sobre-relaxacao sucessiva\n");
-		gauss_seidel_par(iter, LOCAL);
+	else if (!strcmp(argv[4], "sl")) {
+		// printf("Processamento sequencial\n"
+		// 	"Sobre-relaxacao sucessiva local\n");
+		t = gauss_seidel_seq(iter, LOCAL);
+	}
+	else if (!strcmp(argv[4], "pw")) {
+		// printf("Processamento paralelo\n"
+		// 	"Sobre-relaxacao sucessiva\n");
+		t = gauss_seidel_par(iter);
+	}
+	else if (!strcmp(argv[4], "pl")) {
+		// printf("Processamento paralelo\n"
+		// 	"Sobre-relaxacao sucessiva\n");
+		t = gauss_seidel_par(iter, LOCAL);
 	}
 
 	for(int j = n2; j >= -1; --j) {
@@ -86,6 +92,8 @@ int main(int argc, char **argv) {
 		}
 		fprintf(fout, "\n");
 	}
+
+	printf("%.6f\t%.6f\t%.6f\t%.6f\n", t.ida, t.principal, t.volta, t.total);
 
 	free(malha);
 

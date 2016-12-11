@@ -3,8 +3,6 @@
 
 #include "global.h"
 
-#define TAM_BLOCO 8
-
 #define CUDA_SAFE_CALL(call) { \
     cudaError_t err = call;     \
     if(err != cudaSuccess) {    \
@@ -22,6 +20,6 @@ typedef struct {
 
 // Método de Gauss-Seidel paralelizado com sobre-relaxação sucessiva
 // com iter iterações. Usa w variável se modo == LOCAL.
-void gauss_seidel_par(int iter, int modo=FIXO);
+TEMPO gauss_seidel_par(int iter, int modo=FIXO);
 
 #endif

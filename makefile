@@ -1,12 +1,15 @@
 CC=nvcc
 VPATH=include
-FLAGS=-dc
+TAM_BLOCO=8
+FLAGS=-dc -DTAM_BLOCO=$(TAM_BLOCO)
 
-all: gauss_seidel clean
+all: gauss_seidel
 
 gauss_seidel: main.obj sequencial.obj paralelo.obj
-	mkdir -p out
 	$(CC) -o gauss_seidel main.obj sequencial.obj paralelo.obj
+	mkdir -p out
+	mkdir -p obj
+	mv *.obj obj/
 
 main.obj: main.cu sequencial.h paralelo.h global.h
 	$(CC) -c main.cu $(FLAGS)
@@ -18,4 +21,7 @@ paralelo.obj: paralelo.cu paralelo.h global.h
 	$(CC) -c paralelo.cu $(FLAGS)
 
 clean:
-	rm -r *.obj
+	rm -rf *.lib *.exp *.exe *.obj obj
+
+clean_output:
+	rm -rf out/*

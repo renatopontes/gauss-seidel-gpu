@@ -19,6 +19,27 @@ exit(-1); }
 
 #define sq(x) ((x)*(x))
 
+struct TEMPO {
+	float ida;
+	float principal;
+	float volta;
+	float total;
+
+	TEMPO(): ida(0.0), principal(0.0), volta(0.0), total(0.0) {}
+
+	void set_ida(float t) {
+		total += (ida = t);
+	}
+
+	void set_principal(float t) {
+		total += (principal = t);
+	}
+
+	void set_volta(float t) {
+		total += (volta = t);
+	}
+};
+
 extern float *malha;
 
 extern int n1, n2;

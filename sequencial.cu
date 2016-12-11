@@ -60,15 +60,24 @@ void processa_malha(int paridade, void (*atualiza_v) (int, int)) {
 
 // Método de Gauss-Seidel sequencial com relaxação sucessiva iter iterações (w fixo).
 // Se modo == LOCAL, é usada relaxação sucessiva local (w variável).
-void gauss_seidel_seq(int iter, int modo) {
+TEMPO gauss_seidel_seq(int iter, int modo) {
+	TEMPO t;
+	float inicio, fim;
 	void (*atualiza_v) (int, int);
+
 	if (modo == FIXO)
 		atualiza_v = atualiza_v_w;
 	else
 		atualiza_v = atualiza_v_l;
 
+	GET_TIME(inicio);
 	while(iter--) {
 		processa_malha(PAR, atualiza_v);
 		processa_malha(IMPAR, atualiza_v);
 	}
+	GET_TIME(fim);
+
+	t.set_principal(fim-inicio);
+
+	return t;
 }

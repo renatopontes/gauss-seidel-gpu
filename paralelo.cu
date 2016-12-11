@@ -79,12 +79,15 @@ __global__ void processa_malha_l(float *malha, const int paridade, GLOBALS *g) {
 // Código para alocar e rodar os kernels -------------------------------------------------
 
 // Método de Gauss-Seidel com sobre-relaxação sucessiva. w variável se modo == LOCAL.
-void gauss_seidel_par(int iter, int modo) {
-	float *malha_dev;
+TEMPO gauss_seidel_par(int iter, int modo) {
+	TEMPO t;
+	float inicio, fim, tempo_kernel;
+	cudaEvent_t start, stop;
 	GLOBALS *gd, gh;
-
+	float *malha_dev;
 	int n_bytes = n1 * n2 * sizeof(float);
 
+	GET_TIME(inicio);
 	collect_globals(&gh);
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &malha_dev, n_bytes));
@@ -101,7 +104,15 @@ void gauss_seidel_par(int iter, int modo) {
 	b += n2 % n_threads.y ? 1 : 0;
     dim3 blocos_grade(a, b);
 
+    GET_TIME(fim);
+
+    t.set_ida(fim-inicio);
+
+    CUDA_SAFE_CALL(cudaEventCreate(&start));
+    CUDA_SAFE_CALL(cudaEventCreate(&stop));
+
     if (modo == FIXO) {
+    	CUDA_SAFE_CALL(cudaEventRecord(start));
 		while(iter--) {
 			processa_malha_w<<<blocos_grade, n_threads>>>(malha_dev, PAR, gd);
 			CUDA_SAFE_CALL(cudaGetLastError());
@@ -109,6 +120,7 @@ void gauss_seidel_par(int iter, int modo) {
 			CUDA_SAFE_CALL(cudaGetLastError());
 		}
 	} else {
+		CUDA_SAFE_CALL(cudaEventRecord(start));
 		while(iter--) {
 			processa_malha_l<<<blocos_grade, n_threads>>>(malha_dev, PAR, gd);
 			CUDA_SAFE_CALL(cudaGetLastError());
@@ -117,9 +129,19 @@ void gauss_seidel_par(int iter, int modo) {
 		}
 	}
 
+	CUDA_SAFE_CALL(cudaEventRecord(stop));
+    CUDA_SAFE_CALL(cudaEventSynchronize(stop));
+    CUDA_SAFE_CALL(cudaEventElapsedTime(&tempo_kernel, start, stop)); // (tempo em ms)
+    t.set_principal(tempo_kernel/1000);
 
+	GET_TIME(inicio);
 	CUDA_SAFE_CALL(cudaMemcpy(malha, malha_dev, n_bytes, cudaMemcpyDeviceToHost));
 	CUDA_SAFE_CALL(cudaFree(malha_dev));
 	CUDA_SAFE_CALL(cudaFree(gd));
 	CUDA_SAFE_CALL(cudaDeviceReset());
+	GET_TIME(fim);
+
+	t.set_volta(fim-inicio);
+
+	return t;
 }
