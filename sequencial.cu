@@ -1,7 +1,12 @@
+/* Alunos: 																				*/
+/*			Renato Pontes Rodrigues														*/
+/*			Mateus Ildefonso do Nascimento												*/
+
 #include "include/sequencial.h"
 
 // Função auxiliar -----------------------------------------------------------------------
 
+// Retorna a solução aproximada do ponto (i,j) da malha.
 float get_v(int i, int j) {
 	if (i < 0) return uo;
 	if (i == n1) return ue;
@@ -49,7 +54,7 @@ void atualiza_v_l(int i, int j) {
 }
 
 // Processa elementos da malha cuja soma dos índices é <paridade>.
-// Utiliza a função atualiza_v() para atualizar um elemento.
+// Utiliza a função atualiza_v() para atualizar cada elemento.
 void processa_malha(int paridade, void (*atualiza_v) (int, int)) {
 	for (int i = 0; i < n1; ++i) {
 		for (int j = (i+paridade) % 2; j < n2; j += 2) {
@@ -58,8 +63,10 @@ void processa_malha(int paridade, void (*atualiza_v) (int, int)) {
 	}
 }
 
-// Método de Gauss-Seidel sequencial com relaxação sucessiva iter iterações (w fixo).
+// Método de Gauss-Seidel sequencial com relaxação sucessiva
+// usando iter iterações (w fixo).
 // Se modo == LOCAL, é usada relaxação sucessiva local (w variável).
+// Retorna uma estrutura TEMPO com os tempos de execução.
 TEMPO gauss_seidel_seq(int iter, int modo) {
 	TEMPO t;
 	float inicio, fim;

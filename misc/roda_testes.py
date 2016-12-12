@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# Alunos:
+#			Renato Pontes Rodrigues
+#			Mateus Ildefonso do Nascimento
+#
+# Este script roda a aplicação várias vezes com diferentes combinações de parâmetros
+# de entrada, e formata a saída num arquivo CSV.
+
 import os
 import subprocess as sp
 

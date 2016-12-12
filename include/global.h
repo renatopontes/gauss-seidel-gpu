@@ -1,3 +1,7 @@
+/* Alunos: 																				*/
+/*			Renato Pontes Rodrigues														*/
+/*			Mateus Ildefonso do Nascimento												*/
+
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
 
@@ -14,11 +18,14 @@
 #define FIXO 0
 #define LOCAL 1
 
+// Termina o programa com uma mensagem de erro
 #define SHOW_ERR(msg) { fprintf(stderr, "ERROR: %s\n", msg); \
 exit(-1); }
 
+// x²
 #define sq(x) ((x)*(x))
 
+// Struct que guarda os tempos de execução
 struct TEMPO {
 	float ida;
 	float principal;
@@ -40,6 +47,7 @@ struct TEMPO {
 	}
 };
 
+// Declarações dos parâmetros globais do problema (definições no arquivo main.c)
 extern float *malha;
 
 extern int n1, n2;
@@ -49,6 +57,7 @@ extern float h2;
 extern const float w_fixo;
 extern const float pi;
 
+// O NVCC cria duas versões destas funções, uma para o host e outra para o device.
 __host__ __device__ float get_a(float x, float y);
 __host__ __device__ float get_b(float x, float y);
 

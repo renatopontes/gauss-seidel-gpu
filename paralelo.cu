@@ -1,11 +1,17 @@
+/* Alunos: 																				*/
+/*			Renato Pontes Rodrigues														*/
+/*			Mateus Ildefonso do Nascimento												*/
+
 #include "include/paralelo.h"
 
 // Funções auxiliares --------------------------------------------------------------------
 
+// Verifica se a posição (i,j) da malha é válida.
 __device__ int pos_valida(int i, int j, GLOBALS *g) {
 	return (i >= 0) && (i < g->n1) && (j >= 0) && (j < g->n2);
 }
 
+// Retorna a solução aproximada do ponto (i,j) da malha.
 __device__ float get_v(float *malha, int i, int j, GLOBALS *g) {
 	if (i < 0) return g->uo;
 	if (i == g->n1) return g->ue;
@@ -15,6 +21,7 @@ __device__ float get_v(float *malha, int i, int j, GLOBALS *g) {
 	return malha[i*g->n2 + j];
 }
 
+// Copia os parâmetros globais do problema para uma estrutura.
 void collect_globals(GLOBALS *g) {
 	g->n1 = n1; g->n2 = n2;
 	g->h1 = h1; g->h2 = h2;
@@ -25,6 +32,8 @@ void collect_globals(GLOBALS *g) {
 
 // Sobre-relaxação sucessiva -------------------------------------------------------------
 
+// Cada thread atualiza uma posição da malha de acordo com o método
+// de Gauss-Seidel com sobre-relaxação sucessiva descrito no enunciado.
 __global__ void processa_malha_w(float *malha, const int paridade, GLOBALS *g) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -50,6 +59,8 @@ __global__ void processa_malha_w(float *malha, const int paridade, GLOBALS *g) {
 
 // Sobre-relaxação sucessiva local -------------------------------------------------------
 
+// Cada thread atualiza uma posição da malha de acordo com o método
+// de Gauss-Seidel com sobre-relaxação sucessiva local descrito no enunciado.
 __global__ void processa_malha_l(float *malha, const int paridade, GLOBALS *g) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -76,9 +87,10 @@ __global__ void processa_malha_l(float *malha, const int paridade, GLOBALS *g) {
     }
 }
 
-// Código para alocar e rodar os kernels -------------------------------------------------
+// Código para alocar memória no device e rodar os kernels -------------------------------
 
-// Método de Gauss-Seidel com sobre-relaxação sucessiva. w variável se modo == LOCAL.
+// Lança o kernel e mede os tempos de execução.
+// Retorna uma estrutura TEMPO com os tempos de execução.
 TEMPO gauss_seidel_par(int iter, int modo) {
 	TEMPO t;
 	float inicio, fim, tempo_kernel;
@@ -88,11 +100,13 @@ TEMPO gauss_seidel_par(int iter, int modo) {
 	int n_bytes = n1 * n2 * sizeof(float);
 
 	GET_TIME(inicio);
-	collect_globals(&gh);
+	collect_globals(&gh); // faz cópia dos parametros globais
 
+	// Aloca espaço para a malha na memória do device
 	CUDA_SAFE_CALL(cudaMalloc((void**) &malha_dev, n_bytes));
 	CUDA_SAFE_CALL(cudaMemcpy(malha_dev, malha, n_bytes, cudaMemcpyHostToDevice));
 
+	// Aloca as variáveis globais na memória do device
 	CUDA_SAFE_CALL(cudaMalloc((void**) &gd, sizeof(GLOBALS)));
 	CUDA_SAFE_CALL(cudaMemcpy(gd, &gh, sizeof(GLOBALS), cudaMemcpyHostToDevice));
 	
